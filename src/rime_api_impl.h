@@ -141,6 +141,7 @@ RIME_DEPRECATED Bool RimeSyncUserData() {
   deployer.ScheduleTask("installation_update");
   deployer.ScheduleTask("backup_config_files");
   deployer.ScheduleTask("user_dict_sync");
+  deployer.ScheduleTask("predict_data_sync");
   return Bool(deployer.StartMaintenance());
 }
 

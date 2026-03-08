@@ -55,13 +55,13 @@ an<Candidate> Segment::GetSelectedCandidate() const {
 Segmentation::Segmentation() {}
 
 void Segmentation::Reset(const string& new_input) {
-  DLOG(INFO) << "reset to " << size() << " segments.";
+  VLOG(3) << "reset segmentation";
   // mark redo segmentation, while keeping user confirmed segments
   size_t diff_pos = 0;
   while (diff_pos < input_.length() && diff_pos < new_input.length() &&
          input_[diff_pos] == new_input[diff_pos])
     ++diff_pos;
-  DLOG(INFO) << "diff pos: " << diff_pos;
+  VLOG(3) << "segmentation diff updated";
 
   // dispose segments that have changed
   int disposed = 0;

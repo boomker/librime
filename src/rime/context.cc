@@ -252,7 +252,7 @@ bool Context::ClearNonConfirmedComposition() {
   }
   if (reverted) {
     composition_.Forward();
-    DLOG(INFO) << "composition: " << composition_.GetDebugText();
+    VLOG(3) << "composition updated.";
   }
   return reverted;
 }

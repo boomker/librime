@@ -211,7 +211,7 @@ bool PatchLiteral::Resolve(ConfigCompiler* compiler) {
   for (const auto& entry : *patch) {
     const auto& key = entry.first;
     const auto& value = entry.second;
-    LOG(INFO) << "patching " << key;
+    DLOG(INFO) << "patching " << key;
     if (!EditNode(target, key, value, false)) {
       LOG(ERROR) << "error applying patch to " << key;
       success = false;

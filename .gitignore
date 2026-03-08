@@ -1,5 +1,7 @@
 build/
 build-static/
+build-merged/
+rime-lua/
 debug/
 dist/
 data/*
@@ -9,8 +11,8 @@ bin/*
 share/*
 deps/*/*
 plugins/*/
-env.bat
 node_modules/
+env.bat
 *~
 .*.swp
 .cache/

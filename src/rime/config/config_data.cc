@@ -199,7 +199,7 @@ an<ConfigItemRef> TraverseCopyOnWrite(an<ConfigItemRef> head,
 }
 
 bool ConfigData::TraverseWrite(const string& node_path, an<ConfigItem> item) {
-  LOG(INFO) << "write: " << node_path;
+  DLOG(INFO) << "write: " << node_path;
   auto root = New<ConfigDataRootRef>(this);
   if (auto target = TraverseCopyOnWrite(root, node_path)) {
     *target = item;
