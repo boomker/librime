@@ -19,6 +19,8 @@ namespace rime {
 static Selector::ActionDef selector_actions[] = {
     {"previous_candidate", &Selector::PreviousCandidate},
     {"next_candidate", &Selector::NextCandidate},
+    {"previous_candidate_loop", &Selector::PreviousCandidateLoop},
+    {"next_candidate_loop", &Selector::NextCandidateLoop},
     {"previous_page", &Selector::PreviousPage},
     {"next_page", &Selector::NextPage},
     {"home", &Selector::Home},
@@ -226,6 +228,49 @@ bool Selector::NextCandidate(Context* ctx) {
   int candidate_count = comp.back().menu->Prepare(index + 1);
   if (candidate_count <= index)
     return true;
+  ctx->Highlight(index);
+  comp.back().tags.insert("paging");
+  return true;
+}
+
+bool Selector::PreviousCandidateLoop(Context* ctx) {
+  if (is_linear_layout(ctx) && !caret_at_end_of_input(ctx)) {
+    return false;
+  }
+  Composition& comp = ctx->composition();
+  if (comp.empty() || !comp.back().menu)
+    return false;
+  int index = comp.back().selected_index;
+  if (index <= 0) {
+    // Wrap to last candidate
+    int candidate_count = comp.back().menu->Prepare(1000);
+    if (candidate_count > 0) {
+      ctx->Highlight(candidate_count - 1);
+      comp.back().tags.insert("paging");
+      return true;
+    }
+    return !is_linear_layout(ctx);
+  }
+  ctx->Highlight(index - 1);
+  comp.back().tags.insert("paging");
+  return true;
+}
+
+bool Selector::NextCandidateLoop(Context* ctx) {
+  if (is_linear_layout(ctx) && !caret_at_end_of_input(ctx)) {
+    return false;
+  }
+  Composition& comp = ctx->composition();
+  if (comp.empty() || !comp.back().menu)
+    return false;
+  int index = comp.back().selected_index + 1;
+  int candidate_count = comp.back().menu->Prepare(index + 1);
+  if (candidate_count <= index) {
+    // Wrap to first candidate
+    ctx->Highlight(0);
+    comp.back().tags.insert("paging");
+    return true;
+  }
   ctx->Highlight(index);
   comp.back().tags.insert("paging");
   return true;

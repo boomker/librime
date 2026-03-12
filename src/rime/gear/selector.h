@@ -31,6 +31,8 @@ class Selector : public Processor, public KeyBindingProcessor<Selector, 4> {
 
   Handler PreviousCandidate;
   Handler NextCandidate;
+  Handler PreviousCandidateLoop;
+  Handler NextCandidateLoop;
   Handler PreviousPage;
   Handler NextPage;
   Handler Home;

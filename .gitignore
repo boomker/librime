@@ -1,6 +1,5 @@
 build/
 build-static/
-build-merged/
 rime-lua/
 debug/
 dist/
@@ -16,5 +15,6 @@ env.bat
 *~
 .*.swp
 .cache/
+.clangd
 *.7z
 .DS_Store
