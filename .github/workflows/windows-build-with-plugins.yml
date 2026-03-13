@@ -19,7 +19,8 @@ jobs:
       boost_version: 1.89.0
       BOOST_ROOT: ${{ github.workspace }}\deps\boost-1.89.0
       # 指定要包含的插件
-      RIME_PLUGINS: hchunhui/librime-lua lotem/librime-octagram rime/librime-predict
+      RIME_PLUGINS: hchunhui/librime-lua lotem/librime-octagram boomker/librime-predict
+      # RIME_PLUGINS: hchunhui/librime-lua lotem/librime-octagram rime/librime-predict
 
     steps:
       - name: Checkout last commit
