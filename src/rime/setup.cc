@@ -28,7 +28,7 @@ RIME_DLL RIME_MODULE_LIST(kDeployerModules, "deployer");
 RIME_MODULE_LIST(kLegacyModules, "legacy");
 
 RIME_REGISTER_MODULE_GROUP(default, "core", "dict", "gears")
-RIME_REGISTER_MODULE_GROUP(deployer, "core", "dict", "levers")
+RIME_REGISTER_MODULE_GROUP(deployer, "core", "dict", "levers", "predict")
 
 RIME_DLL void LoadModules(const char* module_names[]) {
   ModuleManager& mm(ModuleManager::instance());
