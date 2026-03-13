@@ -156,7 +156,7 @@ void ConcreteEngine::Compose(Context* ctx) {
     return;
   Composition& comp = ctx->composition();
   const string active_input = ctx->input().substr(0, ctx->caret_pos());
-  VLOG(3) << "active input";
+  DLOG(INFO) << "active input: " << active_input;
   comp.Reset(active_input);
   if (ctx->caret_pos() < ctx->input().length() &&
       ctx->caret_pos() == comp.GetConfirmedPosition()) {
@@ -165,21 +165,23 @@ void ConcreteEngine::Compose(Context* ctx) {
   }
   CalculateSegmentation(&comp);
   TranslateSegments(&comp);
-  VLOG(3) << "composition updated.";
+  DLOG(INFO) << "composition: [" << comp.GetDebugText() << "]";
 }
 
 void ConcreteEngine::CalculateSegmentation(Segmentation* segments) {
-  VLOG(3) << "CalculateSegmentation";
+  DLOG(INFO) << "CalculateSegmentation, segments: " << segments->size()
+             << ", finished? " << segments->HasFinishedSegmentation();
   while (!segments->HasFinishedSegmentation()) {
     size_t start_pos = segments->GetCurrentStartPosition();
     size_t end_pos = segments->GetCurrentEndPosition();
-    VLOG(4) << "segment bounds: [" << start_pos << ", " << end_pos << ")";
+    DLOG(INFO) << "start pos: " << start_pos;
+    DLOG(INFO) << "end pos: " << end_pos;
     // recognize a segment by calling the segmentors in turn
     for (auto& segmentor : segmentors_) {
       if (!segmentor->Proceed(segments))
         break;
     }
-    VLOG(4) << "segmentation updated.";
+    DLOG(INFO) << "segmentation: " << *segments;
     // no advancement
     if (start_pos == segments->GetCurrentEndPosition())
       break;
@@ -199,21 +201,22 @@ void ConcreteEngine::CalculateSegmentation(Segmentation* segments) {
 }
 
 void ConcreteEngine::TranslateSegments(Segmentation* segments) {
-  VLOG(3) << "TranslateSegments";
+  DLOG(INFO) << "TranslateSegments: " << *segments;
   for (Segment& segment : *segments) {
-    VLOG(4) << "segment status: [" << segment.start << ", " << segment.end << "), status: " << segment.status;
+    DLOG(INFO) << "segment [" << segment.start << ", " << segment.end
+               << "), status: " << segment.status;
     if (segment.status >= Segment::kGuess)
       continue;
     size_t len = segment.end - segment.start;
     string input = segments->input().substr(segment.start, len);
-    VLOG(4) << "translating segment.";
+    DLOG(INFO) << "translating segment: [" << input << "]";
     auto menu = New<Menu>();
     for (auto& translator : translators_) {
       auto translation = translator->Query(input, segment);
       if (!translation)
         continue;
       if (translation->exhausted()) {
-        VLOG(4) << translator->name_space() << " made a futile translation.";
+        DLOG(INFO) << translator->name_space() << " made a futile translation.";
         continue;
       }
       menu->AddTranslation(translation);
@@ -232,7 +235,7 @@ void ConcreteEngine::TranslateSegments(Segmentation* segments) {
 void ConcreteEngine::FormatText(string* text) {
   if (formatters_.empty())
     return;
-  VLOG(3) << "applying formatters.";
+  DLOG(INFO) << "applying formatters.";
   for (auto& formatter : formatters_) {
     formatter->Format(text);
   }
@@ -249,7 +252,7 @@ void ConcreteEngine::OnCommit(Context* ctx) {
   context_->commit_history().Push(ctx->composition(), ctx->input());
   string text = ctx->GetCommitText();
   FormatText(&text);
-  VLOG(2) << "committing composition.";
+  DLOG(INFO) << "committing composition: " << text;
   sink_(text);
 }
 
