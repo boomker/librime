@@ -201,8 +201,7 @@ void ConcreteEngine::CalculateSegmentation(Segmentation* segments) {
 void ConcreteEngine::TranslateSegments(Segmentation* segments) {
   VLOG(3) << "TranslateSegments";
   for (Segment& segment : *segments) {
-    VLOG(4) << "segment status: [" << segment.start << ", " << segment.end
-             << "), status: " << segment.status;
+    VLOG(4) << "segment status: [" << segment.start << ", " << segment.end << "), status: " << segment.status;
     if (segment.status >= Segment::kGuess)
       continue;
     size_t len = segment.end - segment.start;
