@@ -15,13 +15,13 @@ jobs:
   macos:
     uses: ./.github/workflows/macos-build.yml
     with:
-      rime_plugins: hchunhui/librime-lua lotem/librime-octagram boomker/librime-predict-leveldb
+      rime_plugins: hchunhui/librime-lua lotem/librime-octagram boomker/librime-predict
       # rime_plugins: hchunhui/librime-lua lotem/librime-octagram rime/librime-predict
 
   windows:
     uses: ./.github/workflows/windows-build.yml
     with:
-      rime_plugins: hchunhui/librime-lua lotem/librime-octagram boomker/librime-predict-leveldb
+      rime_plugins: hchunhui/librime-lua lotem/librime-octagram boomker/librime-predict
       # rime_plugins: hchunhui/librime-lua lotem/librime-octagram rime/librime-predict
 
   release:
