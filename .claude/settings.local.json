@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(echo:*)",
+      "Bash(ls:*)",
+      "Bash(make deps:*)",
+      "Bash(bash install-boost.sh 2>&1)",
+      "Bash(cd build:*)",
+      "Bash(cmake:*)",
+      "Bash(ctest:*)",
+      "Bash(brew list:*)",
+      "Read(//usr/local/**)",
+      "Bash(make merged-plugins:*)",
+      "Bash(find:*)",
+      "Bash(claude:*)",
+      "Bash(cat:*)"
+    ]
+  }
+}
