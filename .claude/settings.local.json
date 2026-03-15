@@ -13,7 +13,10 @@
       "Bash(make merged-plugins:*)",
       "Bash(find:*)",
       "Bash(claude:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(exec:*)",
+      "Bash(mkdir:*)",
+      "Bash(git add:*)"
     ]
   }
 }
