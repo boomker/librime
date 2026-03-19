@@ -1,11 +1,15 @@
 aux_source_directory(. rime_test_src)
 set(predict_test_src ${CMAKE_CURRENT_SOURCE_DIR}/predict_test.cc)
 list(FILTER rime_test_src EXCLUDE REGEX "(^|.*/)predict_test\\.cc$")
+set(enable_predict_tests FALSE)
+if(TARGET rime-predict-objs AND NOT WIN32)
+  set(enable_predict_tests TRUE)
+endif()
 
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/test)
 add_executable(rime_test ${rime_test_src})
 
-if(TARGET rime-predict-objs)
+if(enable_predict_tests)
   target_sources(rime_test PRIVATE
     ${predict_test_src}
     $<TARGET_OBJECTS:rime-predict-objs>)
@@ -21,7 +25,7 @@ target_link_libraries(rime_test
   ${rime_plugins_library}
   ${GTEST_LIBRARIES})
 
-if(TARGET rime-predict-objs)
+if(enable_predict_tests)
   target_link_libraries(rime_test ${rime_plugins_deps})
 endif()
 

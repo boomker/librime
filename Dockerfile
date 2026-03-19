@@ -18,7 +18,7 @@ RUN apt update && apt install -y \
 
 COPY / /librime
 WORKDIR /librime
-ENV RIME_PLUGINS="rime/librime-charcode hchunhui/librime-lua lotem/librime-octagram rime/librime-predict"
+ENV RIME_PLUGINS="rime/librime-charcode hchunhui/librime-lua lotem/librime-octagram boomker/librime-predict"
 RUN bash action-install-plugins-macos.sh
 
 WORKDIR /librime
