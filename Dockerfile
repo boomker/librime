@@ -18,11 +18,8 @@ RUN apt update && apt install -y \
 
 COPY / /librime
 WORKDIR /librime
-RUN bash install-plugins.sh \
-  rime/librime-charcode \
-  hchunhui/librime-lua \
-  lotem/librime-octagram \
-  rime/librime-predict
+ENV RIME_PLUGINS="rime/librime-charcode hchunhui/librime-lua lotem/librime-octagram rime/librime-predict"
+RUN bash action-install-plugins-macos.sh
 
 WORKDIR /librime
 RUN cmake -B build -G Ninja \
