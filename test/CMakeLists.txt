@@ -1,6 +1,9 @@
 aux_source_directory(. rime_test_src)
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/test)
 add_executable(rime_test ${rime_test_src})
+target_include_directories(rime_test PRIVATE
+  ${PROJECT_SOURCE_DIR}/plugins/predict/src
+  ${PROJECT_SOURCE_DIR}/plugins/predict/deps/msgpack-c/include)
 target_link_libraries(rime_test
   ${rime_library}
   ${rime_dict_library}

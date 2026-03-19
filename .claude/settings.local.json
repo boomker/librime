@@ -16,7 +16,15 @@
       "Bash(cat:*)",
       "Bash(exec:*)",
       "Bash(mkdir:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(chmod:*)",
+      "Bash(make clang-format-lint:*)",
+      "Bash(make clean:*)",
+      "Bash(otool:*)",
+      "Bash(grep:*)",
+      "Bash(g++ -std=c++17 test_predict_c0.cc -o test_predict_c0)",
+      "Bash(./test_predict_c0)",
+      "Bash(make:*)"
     ]
   }
 }
