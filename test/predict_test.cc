@@ -96,7 +96,7 @@ TEST(RimePredictTest, FallsBackToLegacyPredictDbWhenUserDbMissingKey) {
   ASSERT_TRUE(fallback_db->Load());
   ASSERT_TRUE(fallback_db->valid());
 
-  PredictEngine engine(user_db, fallback_db, 0, 0, 0);
+  PredictEngine engine(user_db, fallback_db, 0, 3, 0, 0);
   ASSERT_TRUE(engine.Predict(nullptr, "今天"));
   ASSERT_EQ(2, engine.num_candidates());
   EXPECT_EQ("天气", engine.candidates(0));
