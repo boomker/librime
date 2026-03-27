@@ -8,6 +8,11 @@
 #include <gtest/gtest.h>
 #include <leveldb/db.h>
 #include <msgpack.hpp>
+#include <rime/config.h>
+#include <rime/engine.h>
+#include <rime/service.h>
+#include <rime/schema.h>
+#include "predictor.h"
 #include "predict_engine.h"
 
 using namespace rime;
@@ -25,6 +30,41 @@ class ScopedPathCleaner {
  private:
   path target_;
 };
+
+class PredictorForTest : public Predictor {
+ public:
+  using Predictor::Predictor;
+  using Predictor::continuous_prediction;
+};
+
+class ScopedDistributionCodeName {
+ public:
+  explicit ScopedDistributionCodeName(string code_name)
+      : original_(Service::instance().deployer().distribution_code_name) {
+    Service::instance().deployer().distribution_code_name = std::move(code_name);
+  }
+
+  ~ScopedDistributionCodeName() {
+    Service::instance().deployer().distribution_code_name = original_;
+  }
+
+ private:
+  string original_;
+};
+
+bool CreatePredictorWithContinuousPrediction(const string& distribution_code_name,
+                                             bool continuous_prediction) {
+  ScopedDistributionCodeName scoped_code_name(distribution_code_name);
+  the<Engine> engine(Engine::Create());
+  auto* config = new Config;
+  config->SetBool("predictor/continuous_prediction", continuous_prediction);
+  engine->ApplySchema(new Schema("predictor_test", config));
+
+  auto predict_engine = New<PredictEngine>(nullptr, nullptr, 1, 0, 0, 0);
+  Ticket ticket(engine.get(), "processor", "predictor");
+  PredictorForTest predictor(ticket, predict_engine);
+  return predictor.continuous_prediction();
+}
 
 }  // namespace
 
@@ -141,4 +181,11 @@ TEST(RimePredictTest, BackupPrunesExpiredDeletedRecords) {
   EXPECT_EQ(text.find("\t过期删除\t"), string::npos);
   EXPECT_NE(text.find("\t未过期删除\t"), string::npos);
   EXPECT_NE(text.find("\t正常词\t"), string::npos);
+}
+
+TEST(RimePredictTest, ContinuousPredictionOnlyEnabledOnMobilePlatforms) {
+  EXPECT_TRUE(CreatePredictorWithContinuousPrediction("Trime", true));
+  EXPECT_TRUE(CreatePredictorWithContinuousPrediction("Hamster", true));
+  EXPECT_FALSE(CreatePredictorWithContinuousPrediction("Squirrel", true));
+  EXPECT_FALSE(CreatePredictorWithContinuousPrediction("Weasel", true));
 }

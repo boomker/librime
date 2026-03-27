@@ -13,10 +13,12 @@
 #include <rime/formatter.h>
 #include <rime/key_event.h>
 #include <rime/menu.h>
+#include <rime/platform_info.h>
 #include <rime/processor.h>
 #include <rime/schema.h>
 #include <rime/segmentation.h>
 #include <rime/segmentor.h>
+#include <rime/service.h>
 #include <rime/switcher.h>
 #include <rime/switches.h>
 #include <rime/ticket.h>
@@ -378,9 +380,17 @@ void ConcreteEngine::InitializeOptions() {
   // reset custom switches
   Config* config = schema_->config();
   Switches switches(config);
-  switches.FindOption([this](Switches::SwitchOption option) {
+  const auto platform = GetPlatformInfo(
+      Service::instance().deployer().distribution_code_name);
+  switches.FindOption([this, &platform](Switches::SwitchOption option) {
     LOG(INFO) << "found switch option: " << option.option_name
               << ", reset: " << option.reset_value;
+    if (option.option_name == "prediction" &&
+        platform.device_class == DeviceClass::kMobile &&
+        option.type == Switches::kToggleOption) {
+      context_->set_option(option.option_name, true);
+      return Switches::kContinue;
+    }
     if (option.reset_value >= 0) {
       if (option.type == Switches::kToggleOption) {
         context_->set_option(option.option_name, (option.reset_value != 0));
