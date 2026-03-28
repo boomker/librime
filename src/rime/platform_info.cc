@@ -89,8 +89,7 @@ DeviceClass InferDeviceClass(const string& os_family,
   if (os == "android" || os == "ios") {
     return DeviceClass::kMobile;
   }
-  if (os == "macos" || os == "windows" || os == "linux" ||
-      os == "freebsd") {
+  if (os == "macos" || os == "windows" || os == "linux" || os == "freebsd") {
     return DeviceClass::kDesktop;
   }
 
@@ -108,9 +107,8 @@ PlatformInfo GetPlatformInfo(const string& distribution_code_name) {
   PlatformInfo platform;
   platform.os_family = DetectOsFamily();
   platform.architecture = DetectRuntimeArchitecture();
-  platform.device_class = InferDeviceClass(platform.os_family,
-                                           platform.architecture,
-                                           distribution_code_name);
+  platform.device_class = InferDeviceClass(
+      platform.os_family, platform.architecture, distribution_code_name);
   return platform;
 }
 

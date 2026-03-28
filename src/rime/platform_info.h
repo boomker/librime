@@ -22,8 +22,8 @@ RIME_DLL DeviceClass InferDeviceClass(const string& os_family,
                                       const string& architecture,
                                       const string& distribution_code_name);
 
-RIME_DLL PlatformInfo GetPlatformInfo(
-    const string& distribution_code_name = string());
+RIME_DLL PlatformInfo
+GetPlatformInfo(const string& distribution_code_name = string());
 
 }  // namespace rime
 

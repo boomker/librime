@@ -387,7 +387,8 @@ void ConcreteEngine::InitializeOptions() {
               << ", reset: " << option.reset_value;
     if (option.option_name == "prediction" &&
         platform.device_class == DeviceClass::kMobile &&
-        option.type == Switches::kToggleOption) {
+        option.type == Switches::kToggleOption &&
+        option.reset_value != 0) {
       context_->set_option(option.option_name, true);
       return Switches::kContinue;
     }
