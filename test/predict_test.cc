@@ -10,7 +10,6 @@
 #include <msgpack.hpp>
 #include <rime/config.h>
 #include <rime/engine.h>
-#include <rime/service.h>
 #include <rime/schema.h>
 #include "predictor.h"
 #include "predict_engine.h"
@@ -33,28 +32,12 @@ class ScopedPathCleaner {
 
 class PredictorForTest : public Predictor {
  public:
-  using Predictor::Predictor;
   using Predictor::continuous_prediction;
+  using Predictor::Predictor;
 };
 
-class ScopedDistributionCodeName {
- public:
-  explicit ScopedDistributionCodeName(string code_name)
-      : original_(Service::instance().deployer().distribution_code_name) {
-    Service::instance().deployer().distribution_code_name = std::move(code_name);
-  }
-
-  ~ScopedDistributionCodeName() {
-    Service::instance().deployer().distribution_code_name = original_;
-  }
-
- private:
-  string original_;
-};
-
-bool CreatePredictorWithContinuousPrediction(const string& distribution_code_name,
-                                             bool continuous_prediction) {
-  ScopedDistributionCodeName scoped_code_name(distribution_code_name);
+bool CreatePredictorWithContinuousPrediction(
+    bool continuous_prediction) {
   the<Engine> engine(Engine::Create());
   auto* config = new Config;
   config->SetBool("predictor/continuous_prediction", continuous_prediction);
@@ -183,9 +166,7 @@ TEST(RimePredictTest, BackupPrunesExpiredDeletedRecords) {
   EXPECT_NE(text.find("\t正常词\t"), string::npos);
 }
 
-TEST(RimePredictTest, ContinuousPredictionOnlyEnabledOnMobilePlatforms) {
-  EXPECT_TRUE(CreatePredictorWithContinuousPrediction("Trime", true));
-  EXPECT_TRUE(CreatePredictorWithContinuousPrediction("Hamster", true));
-  EXPECT_FALSE(CreatePredictorWithContinuousPrediction("Squirrel", true));
-  EXPECT_FALSE(CreatePredictorWithContinuousPrediction("Weasel", true));
+TEST(RimePredictTest, ContinuousPredictionEnabledByConfigOnAllPlatforms) {
+  EXPECT_TRUE(CreatePredictorWithContinuousPrediction(true));
+  EXPECT_FALSE(CreatePredictorWithContinuousPrediction(false));
 }
