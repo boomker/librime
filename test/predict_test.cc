@@ -9,10 +9,12 @@
 #include <leveldb/db.h>
 #include <msgpack.hpp>
 #include <rime/config.h>
+#include <rime/context.h>
 #include <rime/engine.h>
 #include <rime/schema.h>
 #include "predictor.h"
 #include "predict_engine.h"
+#include "rule_trigger_engine.h"
 
 using namespace rime;
 
@@ -36,14 +38,14 @@ class PredictorForTest : public Predictor {
   using Predictor::Predictor;
 };
 
-bool CreatePredictorWithContinuousPrediction(
-    bool continuous_prediction) {
+bool CreatePredictorWithContinuousPrediction(bool continuous_prediction) {
   the<Engine> engine(Engine::Create());
   auto* config = new Config;
   config->SetBool("predictor/continuous_prediction", continuous_prediction);
   engine->ApplySchema(new Schema("predictor_test", config));
 
-  auto predict_engine = New<PredictEngine>(nullptr, nullptr, 1, 0, 0, 0);
+  auto predict_engine =
+      New<PredictEngine>(nullptr, nullptr, nullptr, 1, 0, 0, 0, true, true, 2);
   Ticket ticket(engine.get(), "processor", "predictor");
   PredictorForTest predictor(ticket, predict_engine);
   return predictor.continuous_prediction();
@@ -119,7 +121,8 @@ TEST(RimePredictTest, FallsBackToLegacyPredictDbWhenUserDbMissingKey) {
   ASSERT_TRUE(fallback_db->Load());
   ASSERT_TRUE(fallback_db->valid());
 
-  PredictEngine engine(user_db, fallback_db, 0, 3, 0, 0);
+  PredictEngine engine(user_db, fallback_db, nullptr, 0, 3, 0, 0, true, true,
+                       2);
   ASSERT_TRUE(engine.Predict(nullptr, "今天"));
   ASSERT_EQ(2, engine.num_candidates());
   EXPECT_EQ("天气", engine.candidates(0));
@@ -169,4 +172,71 @@ TEST(RimePredictTest, BackupPrunesExpiredDeletedRecords) {
 TEST(RimePredictTest, ContinuousPredictionEnabledByConfigOnAllPlatforms) {
   EXPECT_TRUE(CreatePredictorWithContinuousPrediction(true));
   EXPECT_FALSE(CreatePredictorWithContinuousPrediction(false));
+}
+
+TEST(RimePredictTest, SceneAwareLearningPromotesSceneSpecificCandidates) {
+  const path db_path{"predict_scene_test.userdb"};
+  ScopedPathCleaner db_cleaner(db_path);
+
+  auto user_db = std::make_shared<PredictDb>(db_path);
+  ASSERT_TRUE(user_db->valid());
+
+  the<Engine> engine(Engine::Create());
+  auto* config = new Config;
+  engine->ApplySchema(new Schema("predict_scene_test", config));
+  engine->context()->set_property("predict_scene", "office");
+
+  PredictEngine predict_engine(user_db, nullptr, nullptr, 0, 0, 0, 0, true,
+                               true, 2);
+  engine->context()->commit_history().Push(CommitRecord("phrase", "请查收"));
+  engine->context()->commit_history().Push(CommitRecord("phrase", "附件"));
+  predict_engine.UpdatePredict(engine->context(), "请查收", "附件", false);
+
+  engine->context()->set_property("predict_scene", "chat");
+  engine->context()->commit_history().Push(CommitRecord("phrase", "请查收"));
+  engine->context()->commit_history().Push(CommitRecord("phrase", "收到啦"));
+  predict_engine.UpdatePredict(engine->context(), "请查收", "收到啦", false);
+
+  engine->context()->set_property("predict_scene", "office");
+  ASSERT_TRUE(predict_engine.Predict(engine->context(), "请查收"));
+  ASSERT_EQ("附件", predict_engine.candidates(0));
+
+  engine->context()->set_property("predict_scene", "chat");
+  ASSERT_TRUE(predict_engine.Predict(engine->context(), "请查收"));
+  ASSERT_EQ("收到啦", predict_engine.candidates(0));
+}
+
+TEST(RimePredictTest, RuleTriggerEngineLoadsCalendarAndSceneRules) {
+  const path calendar_path{"predict_calendar_test.yaml"};
+  const path rules_path{"trigger_rules_test.db"};
+  ScopedPathCleaner calendar_cleaner(calendar_path);
+  ScopedPathCleaner rules_cleaner(rules_path);
+
+  std::ofstream out(calendar_path.string());
+  ASSERT_TRUE(out.is_open());
+  out << "solar_terms:\n";
+  out << "  \"04-04\": 清明\n";
+  out << "holidays:\n";
+  out << "  \"2026-04-04\": [清明节]\n";
+  out.close();
+
+  RuleTriggerEngine rule_engine;
+  ASSERT_TRUE(rule_engine.LoadCalendar(calendar_path));
+  ASSERT_TRUE(rule_engine.LoadFromDB(rules_path));
+
+  Config config;
+  auto rules = New<ConfigList>();
+  auto scene_rule = New<ConfigMap>();
+  scene_rule->Set("trigger", New<ConfigValue>("请查收"));
+  auto candidates = New<ConfigList>();
+  candidates->Append(New<ConfigValue>("附件"));
+  scene_rule->Set("candidates", candidates);
+  scene_rule->Set("tag", New<ConfigValue>("scene_office"));
+  rules->Append(scene_rule);
+  config.SetItem("predict_trigger_rules", rules);
+  rule_engine.LoadFromConfig(&config);
+
+  auto matched = rule_engine.Match("请查收", "office");
+  ASSERT_FALSE(matched.empty());
+  EXPECT_EQ("附件", matched.front());
 }
