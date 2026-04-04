@@ -43,7 +43,7 @@ Windows uses `build.bat` with subcommands: `deps`, `librime`, `test`, `clean`.
 
 ## Code Style
 
-Chromium style via `.clang-format` (no sorted includes). Enforced in CI with clang-format-18. Run `make clang-format-apply` before committing. The lint/format scope covers `src/`, `test/`, `tools/`, `sample/`, and `plugins/` (excluding plugin submodule internals).
+Chromium style via `.clang-format` (no sorted includes). Enforced in CI with clang-format-22. Run `make clang-format-apply` before committing. The lint/format scope covers `src/`, `test/`, `tools/`, `sample/`, and `plugins/` (excluding plugin submodule internals).
 
 ## Architecture
 
