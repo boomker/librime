@@ -87,6 +87,7 @@ if %clean% == 1 (
   rmdir /s /q deps\marisa-trie\%build_dir%
   rmdir /s /q deps\opencc\%build_dir%
   rmdir /s /q deps\yaml-cpp\%build_dir%
+  rmdir /s /q deps\sqlite3\%build_dir%
 )
 
 if defined CMAKE_GENERATOR (
@@ -160,6 +161,15 @@ if %build_deps% == 1 (
   -DCMAKE_POSITION_INDEPENDENT_CODE:BOOL=ON^
   -DBUILD_TESTING:BOOL=OFF^
   -DENABLE_TOOLS:BOOL=OFF
+  if errorlevel 1 goto error
+  cmake --build %build_dir% --config %build_config% --target install
+  if errorlevel 1 goto error
+  popd
+
+  echo building sqlite3.
+  pushd deps\sqlite3
+  cmake . -B%build_dir% %deps_cmake_flags%^
+  -DBUILD_SHARED_LIBS:BOOL=OFF
   if errorlevel 1 goto error
   cmake --build %build_dir% --config %build_config% --target install
   if errorlevel 1 goto error

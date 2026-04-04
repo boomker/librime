@@ -16,3 +16,6 @@
 [submodule "opencc"]
 	path = deps/opencc
 	url = https://github.com/BYVoid/OpenCC.git
+[submodule "deps/sqlite3"]
+	path = deps/sqlite3
+	url = https://github.com/azadkuh/sqlite-amalgamation.git
