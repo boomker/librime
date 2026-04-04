@@ -380,15 +380,14 @@ void ConcreteEngine::InitializeOptions() {
   // reset custom switches
   Config* config = schema_->config();
   Switches switches(config);
-  const auto platform = GetPlatformInfo(
-      Service::instance().deployer().distribution_code_name);
+  const auto platform =
+      GetPlatformInfo(Service::instance().deployer().distribution_code_name);
   switches.FindOption([this, &platform](Switches::SwitchOption option) {
     LOG(INFO) << "found switch option: " << option.option_name
               << ", reset: " << option.reset_value;
     if (option.option_name == "prediction" &&
         platform.device_class == DeviceClass::kMobile &&
-        option.type == Switches::kToggleOption &&
-        option.reset_value != 0) {
+        option.type == Switches::kToggleOption && option.reset_value != 0) {
       context_->set_option(option.option_name, true);
       return Switches::kContinue;
     }
