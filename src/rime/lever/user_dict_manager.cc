@@ -43,7 +43,10 @@ void UserDictManager::GetUserDictList(UserDictList* user_dict_list,
     string name = it->path().filename().u8string();
     if (boost::ends_with(name, component->extension())) {
       boost::erase_last(name, component->extension());
-      user_dict_list->push_back(name);
+      // Skip internal temporary databases (e.g., .temp)
+      if (!name.empty() && name[0] != '.') {
+        user_dict_list->push_back(name);
+      }
     }
   }
 }
