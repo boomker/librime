@@ -655,3 +655,126 @@ TEST(RimePredictTest, RuleCombinedMatchTypeAndScenes) {
   matched = rule_engine.Match("git", "chat");
   EXPECT_TRUE(matched.empty());
 }
+
+TEST(RimePredictTest, TemplateTimeGreeting) {
+  RuleTriggerEngine rule_engine;
+
+  Config config;
+  auto rules = New<ConfigList>();
+  auto template_rule = New<ConfigMap>();
+  template_rule->Set("template", New<ConfigValue>("time_greeting"));
+  template_rule->Set("base_priority", New<ConfigValue>(200));
+
+  auto items = New<ConfigList>();
+  auto morning = New<ConfigMap>();
+  morning->Set("trigger", New<ConfigValue>("早"));
+  // 不设置 hour_min/hour_max，这样任何时间都能匹配
+  auto morning_candidates = New<ConfigList>();
+  morning_candidates->Append(New<ConfigValue>("早上好"));
+  morning_candidates->Append(New<ConfigValue>("早安"));
+  morning->Set("candidates", morning_candidates);
+  items->Append(morning);
+
+  auto noon = New<ConfigMap>();
+  noon->Set("trigger", New<ConfigValue>("午"));
+  auto noon_candidates = New<ConfigList>();
+  noon_candidates->Append(New<ConfigValue>("中午好"));
+  noon->Set("candidates", noon_candidates);
+  items->Append(noon);
+
+  template_rule->Set("items", items);
+  rules->Append(template_rule);
+  config.SetItem("predict_trigger_rules", rules);
+  rule_engine.LoadFromConfig(&config);
+
+  // 模板应该展开成 3 条规则（2个早上 + 1个中午）
+  // 当用户输入 "早" 时，应该建议 "早上好" 和 "早安"
+  auto matched = rule_engine.Match("早", "general");
+  ASSERT_FALSE(matched.empty());
+  EXPECT_EQ(2, matched.size());
+  EXPECT_EQ("早上好", matched[0]);
+  EXPECT_EQ("早安", matched[1]);
+
+  // 当用户输入 "午" 时，应该建议 "中午好"
+  matched = rule_engine.Match("午", "general");
+  ASSERT_FALSE(matched.empty());
+  EXPECT_EQ("中午好", matched[0]);
+}
+
+TEST(RimePredictTest, TemplateHolidayGreeting) {
+  RuleTriggerEngine rule_engine;
+
+  Config config;
+  auto rules = New<ConfigList>();
+  auto template_rule = New<ConfigMap>();
+  template_rule->Set("template", New<ConfigValue>("holiday_greeting"));
+  template_rule->Set("base_priority", New<ConfigValue>(150));
+
+  auto holidays = New<ConfigList>();
+  holidays->Append(New<ConfigValue>("春节"));
+  holidays->Append(New<ConfigValue>("中秋"));
+  holidays->Append(New<ConfigValue>("端午"));
+  template_rule->Set("holidays", holidays);
+  template_rule->Set("candidate_template", New<ConfigValue>("{holiday}快乐"));
+
+  rules->Append(template_rule);
+  config.SetItem("predict_trigger_rules", rules);
+  rule_engine.LoadFromConfig(&config);
+
+  // 模板应该展开成 3 条规则
+  // trigger 默认是节日名本身，candidate 是 "{holiday}快乐"
+  // 当用户输入 "春节" 时，应该建议 "春节快乐"
+  auto matched = rule_engine.Match("春节", "general");
+  ASSERT_FALSE(matched.empty());
+  EXPECT_EQ("春节快乐", matched[0]);
+
+  matched = rule_engine.Match("中秋", "general");
+  ASSERT_FALSE(matched.empty());
+  EXPECT_EQ("中秋快乐", matched[0]);
+
+  matched = rule_engine.Match("端午", "general");
+  ASSERT_FALSE(matched.empty());
+  EXPECT_EQ("端午快乐", matched[0]);
+}
+
+TEST(RimePredictTest, TemplateWeekdayReminder) {
+  RuleTriggerEngine rule_engine;
+
+  Config config;
+  auto rules = New<ConfigList>();
+  auto template_rule = New<ConfigMap>();
+  template_rule->Set("template", New<ConfigValue>("weekday_reminder"));
+  template_rule->Set("base_priority", New<ConfigValue>(120));
+
+  auto items = New<ConfigList>();
+  auto monday = New<ConfigMap>();
+  monday->Set("trigger", New<ConfigValue>("周报"));
+  // 不设置 weekday，这样任何日期都能匹配
+  auto monday_candidates = New<ConfigList>();
+  monday_candidates->Append(New<ConfigValue>("记得写周报"));
+  monday->Set("candidates", monday_candidates);
+  items->Append(monday);
+
+  auto friday = New<ConfigMap>();
+  friday->Set("trigger", New<ConfigValue>("总结"));
+  auto friday_candidates = New<ConfigList>();
+  friday_candidates->Append(New<ConfigValue>("周总结"));
+  friday->Set("candidates", friday_candidates);
+  items->Append(friday);
+
+  template_rule->Set("items", items);
+  rules->Append(template_rule);
+  config.SetItem("predict_trigger_rules", rules);
+  rule_engine.LoadFromConfig(&config);
+
+  // 模板应该展开成 2 条规则
+  // 当用户输入 "周报" 时，应该建议 "记得写周报"
+  auto matched = rule_engine.Match("周报", "general");
+  ASSERT_FALSE(matched.empty());
+  EXPECT_EQ("记得写周报", matched[0]);
+
+  matched = rule_engine.Match("总结", "general");
+  ASSERT_FALSE(matched.empty());
+  EXPECT_EQ("周总结", matched[0]);
+}
+
