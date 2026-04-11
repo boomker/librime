@@ -34,7 +34,6 @@ class ScopedPathCleaner {
 
 class PredictorForTest : public Predictor {
  public:
-  using Predictor::continuous_prediction;
   using Predictor::Predictor;
 };
 
@@ -42,19 +41,6 @@ class RuleTriggerEngineForTest : public RuleTriggerEngine {
  public:
   using RuleTriggerEngine::MatchRule;
 };
-
-bool CreatePredictorWithContinuousPrediction(bool continuous_prediction) {
-  the<Engine> engine(Engine::Create());
-  auto* config = new Config;
-  config->SetBool("predictor/continuous_prediction", continuous_prediction);
-  engine->ApplySchema(new Schema("predictor_test", config));
-
-  auto predict_engine =
-      New<PredictEngine>(nullptr, nullptr, nullptr, 1, 0, 0, 0, true, true, 2);
-  Ticket ticket(engine.get(), "processor", "predictor");
-  PredictorForTest predictor(ticket, predict_engine);
-  return predictor.continuous_prediction();
-}
 
 }  // namespace
 
@@ -126,8 +112,8 @@ TEST(RimePredictTest, FallsBackToLegacyPredictDbWhenUserDbMissingKey) {
   ASSERT_TRUE(fallback_db->Load());
   ASSERT_TRUE(fallback_db->valid());
 
-  PredictEngine engine(user_db, fallback_db, nullptr, 0, 3, 0, 0, true, true,
-                       2);
+  PredictEngine engine(user_db, fallback_db, nullptr, 0, 3, 0, 0, true, true, 2,
+                       UserRulePriority::Auto);
   ASSERT_TRUE(engine.Predict(nullptr, "今天"));
   ASSERT_EQ(2, engine.num_candidates());
   EXPECT_EQ("天气", engine.candidates(0));
@@ -174,11 +160,6 @@ TEST(RimePredictTest, BackupPrunesExpiredDeletedRecords) {
   EXPECT_NE(text.find("\t正常词\t"), string::npos);
 }
 
-TEST(RimePredictTest, ContinuousPredictionEnabledByConfigOnAllPlatforms) {
-  EXPECT_TRUE(CreatePredictorWithContinuousPrediction(true));
-  EXPECT_FALSE(CreatePredictorWithContinuousPrediction(false));
-}
-
 TEST(RimePredictTest, SceneAwareLearningPromotesSceneSpecificCandidates) {
   const path db_path{"predict_scene_test.userdb"};
   ScopedPathCleaner db_cleaner(db_path);
@@ -192,7 +173,7 @@ TEST(RimePredictTest, SceneAwareLearningPromotesSceneSpecificCandidates) {
   engine->context()->set_property("predict_scene", "office");
 
   PredictEngine predict_engine(user_db, nullptr, nullptr, 0, 0, 0, 0, true,
-                               true, 2);
+                               true, 2, UserRulePriority::Auto);
   engine->context()->commit_history().Push(CommitRecord("phrase", "请查收"));
   engine->context()->commit_history().Push(CommitRecord("phrase", "附件"));
   predict_engine.UpdatePredict(engine->context(), "请查收", "附件", false);
@@ -274,7 +255,8 @@ TEST(RimePredictTest, RecentLearningPrioritizedOverHighCommitCount) {
   auto user_db = std::make_shared<PredictDb>(db_path);
   ASSERT_TRUE(user_db->valid());
 
-  PredictEngine engine(user_db, nullptr, nullptr, 0, 3, 0, 0, false, true, 2);
+  PredictEngine engine(user_db, nullptr, nullptr, 0, 3, 0, 0, false, true, 2,
+                       UserRulePriority::Auto);
   ASSERT_TRUE(engine.Predict(nullptr, "测试"));
   ASSERT_GE(engine.num_candidates(), 1);
   // Recent candidate should rank first despite fewer commits
@@ -320,7 +302,8 @@ TEST(RimePredictTest, ContextualCandidatesRankedByRecency) {
   engine_ctx->context()->commit_history().Push(CommitRecord("phrase", "甲"));
   engine_ctx->context()->commit_history().Push(CommitRecord("phrase", "乙"));
 
-  PredictEngine engine(user_db, nullptr, nullptr, 0, 5, 0, 0, false, true, 2);
+  PredictEngine engine(user_db, nullptr, nullptr, 0, 5, 0, 0, false, true, 2,
+                       UserRulePriority::Auto);
   ASSERT_TRUE(engine.Predict(engine_ctx->context(), "查询"));
   ASSERT_GE(engine.num_candidates(), 2);
 
@@ -379,8 +362,8 @@ TEST(RimePredictTest, RuleCandidatesPromotedWhenNoRecentLearning) {
   config.SetItem("predict_trigger_rules", rules);
   rule_engine->LoadFromConfig(&config);
 
-  PredictEngine engine(user_db, nullptr, rule_engine, 0, 3, 0, 0, true, true,
-                       2);
+  PredictEngine engine(user_db, nullptr, rule_engine, 0, 3, 0, 0, true, true, 2,
+                       UserRulePriority::Auto);
   ASSERT_TRUE(engine.Predict(nullptr, "触发"));
   ASSERT_GE(engine.num_candidates(), 2);
   // Rule candidate should be promoted before old learned candidates
@@ -572,24 +555,28 @@ TEST(RimePredictTest, RuleMonthDayRangeBasic) {
 
   // Jan 17 should match
   std::tm jan_17 = {};
-  jan_17.tm_mon = 0;   // January
+  jan_17.tm_mon = 0;  // January
   jan_17.tm_mday = 17;
-  EXPECT_TRUE(rule_engine.MatchRule(test_rule, "test", "general", tags, jan_17));
+  EXPECT_TRUE(
+      rule_engine.MatchRule(test_rule, "test", "general", tags, jan_17));
 
   // Jan 10 should NOT match (before range)
   std::tm jan_10 = jan_17;
   jan_10.tm_mday = 10;
-  EXPECT_FALSE(rule_engine.MatchRule(test_rule, "test", "general", tags, jan_10));
+  EXPECT_FALSE(
+      rule_engine.MatchRule(test_rule, "test", "general", tags, jan_10));
 
   // Jan 25 should NOT match (after range)
   std::tm jan_25 = jan_17;
   jan_25.tm_mday = 25;
-  EXPECT_FALSE(rule_engine.MatchRule(test_rule, "test", "general", tags, jan_25));
+  EXPECT_FALSE(
+      rule_engine.MatchRule(test_rule, "test", "general", tags, jan_25));
 
   // Empty range should always match
   test_rule.month_day_start = "";
   test_rule.month_day_end = "";
-  EXPECT_TRUE(rule_engine.MatchRule(test_rule, "test", "general", tags, jan_17));
+  EXPECT_TRUE(
+      rule_engine.MatchRule(test_rule, "test", "general", tags, jan_17));
 }
 
 TEST(RimePredictTest, RuleMonthDayRangeCrossYear) {
@@ -609,23 +596,27 @@ TEST(RimePredictTest, RuleMonthDayRangeCrossYear) {
   std::tm dec_28 = {};
   dec_28.tm_mon = 11;  // December
   dec_28.tm_mday = 28;
-  EXPECT_TRUE(rule_engine.MatchRule(test_rule, "holiday", "general", tags, dec_28));
+  EXPECT_TRUE(
+      rule_engine.MatchRule(test_rule, "holiday", "general", tags, dec_28));
 
   // Dec 20 should NOT match (before range)
   std::tm dec_20 = dec_28;
   dec_20.tm_mday = 20;
-  EXPECT_FALSE(rule_engine.MatchRule(test_rule, "holiday", "general", tags, dec_20));
+  EXPECT_FALSE(
+      rule_engine.MatchRule(test_rule, "holiday", "general", tags, dec_20));
 
   // Jan 3 should match (within range)
   std::tm jan_3 = {};
-  jan_3.tm_mon = 0;   // January
+  jan_3.tm_mon = 0;  // January
   jan_3.tm_mday = 3;
-  EXPECT_TRUE(rule_engine.MatchRule(test_rule, "holiday", "general", tags, jan_3));
+  EXPECT_TRUE(
+      rule_engine.MatchRule(test_rule, "holiday", "general", tags, jan_3));
 
   // Jan 10 should NOT match (after range)
   std::tm jan_10 = jan_3;
   jan_10.tm_mday = 10;
-  EXPECT_FALSE(rule_engine.MatchRule(test_rule, "holiday", "general", tags, jan_10));
+  EXPECT_FALSE(
+      rule_engine.MatchRule(test_rule, "holiday", "general", tags, jan_10));
 }
 
 TEST(RimePredictTest, RuleCombinedMatchTypeAndScenes) {
@@ -637,8 +628,7 @@ TEST(RimePredictTest, RuleCombinedMatchTypeAndScenes) {
   rule->Set("trigger", New<ConfigValue>("git"));
   rule->Set("match_type", New<ConfigValue>("exact"));
   rule->Set("scenes", New<ConfigList>());
-  As<ConfigList>(rule->Get("scenes"))
-      ->Append(New<ConfigValue>("programming"));
+  As<ConfigList>(rule->Get("scenes"))->Append(New<ConfigValue>("programming"));
   auto candidates = New<ConfigList>();
   candidates->Append(New<ConfigValue>("git专业命令"));
   rule->Set("candidates", candidates);
@@ -778,3 +768,33 @@ TEST(RimePredictTest, TemplateWeekdayReminder) {
   EXPECT_EQ("周总结", matched[0]);
 }
 
+TEST(RimePredictTest, LoadFromConfigReadsPredictorNamespace) {
+  // Verify that predict_trigger_rules nested under predictor/ is loaded.
+  // This matches the real schema config layout used in production.
+  RuleTriggerEngine rule_engine;
+
+  Config config;
+  auto rules = New<ConfigList>();
+  auto rule = New<ConfigMap>();
+  rule->Set("trigger", New<ConfigValue>("我没"));
+  auto candidates = New<ConfigList>();
+  candidates->Append(New<ConfigValue>("token"));
+  candidates->Append(New<ConfigValue>("余额"));
+  rule->Set("candidates", candidates);
+  rules->Append(rule);
+
+  auto trigger_map = New<ConfigMap>();
+  trigger_map->Set("rules", rules);
+
+  auto predictor_map = New<ConfigMap>();
+  predictor_map->Set("predict_trigger_rules", trigger_map);
+
+  config.SetItem("predictor", predictor_map);
+  rule_engine.LoadFromConfig(&config);
+
+  auto matched = rule_engine.Match("我没", "general");
+  ASSERT_FALSE(matched.empty());
+  EXPECT_EQ("token", matched[0]);
+  ASSERT_GE(matched.size(), 2u);
+  EXPECT_EQ("余额", matched[1]);
+}

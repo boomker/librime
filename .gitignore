@@ -18,3 +18,4 @@ env.bat
 .clangd
 *.7z
 .DS_Store
+.gitnexus

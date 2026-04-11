@@ -24,7 +24,14 @@
       "Bash(grep:*)",
       "Bash(g++ -std=c++17 test_predict_c0.cc -o test_predict_c0)",
       "Bash(./test_predict_c0)",
-      "Bash(make:*)"
+      "Bash(make:*)",
+      "Bash(gh run:*)",
+      "Bash(gh repo:*)",
+      "Bash(tmux-bridge list:*)",
+      "Bash(tmux-bridge read:*)",
+      "Bash(tmux-bridge message:*)",
+      "Bash(tmux-bridge keys:*)",
+      "Bash(git commit:*)"
     ]
   }
 }
