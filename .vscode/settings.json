@@ -1,0 +1,16 @@
+{
+  "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+  "C_Cpp.default.compileCommands": "${workspaceFolder}/build/compile_commands.json",
+  "C_Cpp.errorSquiggles": "disabled",
+  "C_Cpp.intelliSenseEngine": "disabled",
+  "clangd.arguments": [
+    "--compile-commands-dir=${workspaceFolder}/build",
+    "--clang-tidy=false",
+    "--background-index=false",
+    "--header-insertion=never"
+  ],
+  "problems.decorations.enabled": false,
+  "cSpell.words": [
+    "MMDD"
+  ]
+}

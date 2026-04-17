@@ -15,6 +15,7 @@ env.bat
 *~
 .*.swp
 .cache/
+.agents/
 .clangd
 *.7z
 .DS_Store

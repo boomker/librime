@@ -10,16 +10,12 @@ set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/test)
 add_executable(rime_test ${rime_test_src})
 
 if(enable_predict_tests)
-  find_library(SQLITE3_LIBRARY sqlite3)
   target_sources(rime_test PRIVATE
     ${predict_test_src}
     $<TARGET_OBJECTS:rime-predict-objs>)
   target_include_directories(rime_test PRIVATE
     ${PROJECT_SOURCE_DIR}/plugins/predict/src
     ${PROJECT_SOURCE_DIR}/plugins/predict/deps/msgpack-c/include)
-  if(SQLITE3_LIBRARY)
-    target_link_libraries(rime_test ${SQLITE3_LIBRARY})
-  endif()
 endif()
 
 target_link_libraries(rime_test
