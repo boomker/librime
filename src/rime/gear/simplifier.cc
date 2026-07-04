@@ -18,7 +18,6 @@
 #include <rime/translation.h>
 #include <rime/gear/opencc.h>
 #include <rime/gear/simplifier.h>
-#include <opencc/Exception.hpp>
 
 static const char* quote_left = "\xe3\x80\x94";   //"\xef\xbc\x88";
 static const char* quote_right = "\xe3\x80\x95";  //"\xef\xbc\x89";
@@ -32,7 +31,8 @@ Simplifier::Simplifier(const Ticket& ticket, an<Opencc> opencc)
   if (name_space_ == "filter") {
     name_space_ = "simplifier";
   }
-  if (Config* config = engine_->schema()->config()) {
+  Schema* schema = engine_ ? engine_->schema() : nullptr;
+  if (Config* config = schema ? schema->config() : nullptr) {
     string tips;
     if (config->GetString(name_space_ + "/tips", &tips) ||
         config->GetString(name_space_ + "/tip", &tips)) {
@@ -191,14 +191,9 @@ Simplifier* SimplifierComponent::Create(const Ticket& ticket) {
       opencc_config_path = shared_config_path;
     }
   }
-  try {
-    opencc = New<Opencc>(opencc_config_path);
-    // 以原始配置中的文件路径作为 key，避免重复查找文件
-    opencc_map_[opencc_config] = opencc;
-  } catch (opencc::Exception& e) {
-    LOG(ERROR) << "Error initializing opencc: " << e.what();
-    return nullptr;
-  }
+  opencc = New<Opencc>(opencc_config_path);
+  // 以原始配置中的文件路径作为 key，避免重复查找文件
+  opencc_map_[opencc_config] = opencc;
   return new Simplifier(ticket, opencc);
 }
 

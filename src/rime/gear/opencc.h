@@ -6,6 +6,7 @@
 #define RIME_OPENCC_H_
 
 #include <memory>
+#include <rime_api.h>
 #include <rime/common.h>
 
 namespace opencc {
@@ -15,13 +16,14 @@ class Dict;
 
 namespace rime {
 
-class Opencc {
+class RIME_DLL Opencc {
  public:
   Opencc(const path& config_path);
+  virtual ~Opencc() = default;
 
-  bool ConvertWord(const string& text, vector<string>* forms);
-  bool RandomConvertText(const string& text, string* simplified);
-  bool ConvertText(const string& text, string* simplified);
+  virtual bool ConvertWord(const string& text, vector<string>* forms);
+  virtual bool RandomConvertText(const string& text, string* simplified);
+  virtual bool ConvertText(const string& text, string* simplified);
 
  private:
   void Initialize();
