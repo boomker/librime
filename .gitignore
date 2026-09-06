@@ -1,3 +1,4 @@
+logs/
 build/
 build-static/
 build-merged/
@@ -17,8 +18,10 @@ env.bat
 .*.swp
 .omx/
 .cache/
+.claude/
 .agents/
 .clangd
 *.7z
 .DS_Store
 .gitnexus
+.codegraph/
