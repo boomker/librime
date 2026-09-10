@@ -15,9 +15,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runs-on: [macos-15]
+        runs-on: [macos-26]
         include:
-          - runs-on: macos-15
+          - runs-on: macos-26
             create-distributable: true
             build_variant: universal
     env:
