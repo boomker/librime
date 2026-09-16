@@ -1,10 +1,13 @@
-FROM debian:12.1
+FROM debian:13-slim
 
-RUN apt update && apt install -y \
+RUN DEBIAN_FRONTEND=noninteractive apt-get update \
+  && apt-get install -y --no-install-recommends \
+  ca-certificates \
   git \
   build-essential \
   cmake \
   ninja-build \
+  pkg-config \
   libboost-dev \
   libboost-regex-dev \
   libboost-locale-dev \
@@ -14,14 +17,15 @@ RUN apt update && apt install -y \
   libleveldb-dev \
   libmarisa-dev \
   libopencc-dev \
-  liblua5.4-dev
+  liblua5.4-dev \
+  && rm -rf /var/lib/apt/lists/*
 
-COPY / /librime
 WORKDIR /librime
+COPY . .
+
 ENV RIME_PLUGINS="rime/librime-charcode hchunhui/librime-lua lotem/librime-octagram boomker/librime-predict"
 RUN bash action-install-plugins-macos.sh
 
-WORKDIR /librime
 RUN cmake -B build -G Ninja \
   -DCMAKE_BUILD_TYPE:STRING=Release \
   -DENABLE_LOGGING:BOOL=ON \
@@ -30,5 +34,4 @@ RUN cmake -B build -G Ninja \
   -DBUILD_SHARED_LIBS:BOOL=ON
 RUN cmake --build build
 
-WORKDIR /librime/build
-RUN ctest
+RUN ctest --test-dir build --output-on-failure
