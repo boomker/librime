@@ -22,8 +22,8 @@ jobs:
           - { compiler: msvc, cc: cl, cxx: cl }
           - { compiler: clang, cc: clang, cxx: clang++ }
     env:
-      boost_version: 1.89.0
-      BOOST_ROOT: ${{ github.workspace }}\deps\boost-1.89.0
+      boost_version: 1.92.0
+      BOOST_ROOT: ${{ github.workspace }}\deps\boost-1.92.0
       RIME_PLUGINS: ${{ inputs.rime_plugins }}
 
     steps:
