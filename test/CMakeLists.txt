@@ -18,14 +18,18 @@ if(enable_predict_tests)
     ${PROJECT_SOURCE_DIR}/plugins/predict/deps/msgpack-c/include)
   # External plugin builds leave rime_plugins_deps empty, so tests that link
   # predict object files directly must keep SQLite on the link line themselves.
-  if(TARGET SQLite3::SQLite3)
-    target_link_libraries(rime_test SQLite3::SQLite3)
-  elseif(TARGET SQLite::SQLite3)
-    target_link_libraries(rime_test SQLite::SQLite3)
-  elseif(SQLite3_LIBRARY)
-    target_link_libraries(rime_test ${SQLite3_LIBRARY})
-  elseif(SQLite3_LIBRARIES)
-    target_link_libraries(rime_test ${SQLite3_LIBRARIES})
+  # Merged builds instead get SQLite through the rime target's link interface,
+  # where linking it again would only pass a duplicate -lsqlite3 to the linker.
+  if(NOT rime_plugins_deps)
+    if(TARGET SQLite3::SQLite3)
+      target_link_libraries(rime_test SQLite3::SQLite3)
+    elseif(TARGET SQLite::SQLite3)
+      target_link_libraries(rime_test SQLite::SQLite3)
+    elseif(SQLite3_LIBRARY)
+      target_link_libraries(rime_test ${SQLite3_LIBRARY})
+    elseif(SQLite3_LIBRARIES)
+      target_link_libraries(rime_test ${SQLite3_LIBRARIES})
+    endif()
   endif()
 endif()
 
@@ -36,9 +40,10 @@ target_link_libraries(rime_test
   ${rime_plugins_library}
   ${GTEST_LIBRARIES})
 
-if(enable_predict_tests)
-  target_link_libraries(rime_test ${rime_plugins_deps})
-endif()
+# Merged builds link the plugin dependencies (leveldb, sqlite3, ...) into the
+# rime target itself, which exports them to its dependents. Linking
+# rime_plugins_deps here as well would duplicate those -l flags, so the test
+# target relies on that exported interface instead.
 
 if(BUILD_SHARED_LIBS)
   target_compile_definitions(rime_test PRIVATE RIME_IMPORTS)
