@@ -23,8 +23,11 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get update \
 WORKDIR /librime
 COPY . .
 
-ENV RIME_PLUGINS="rime/librime-charcode hchunhui/librime-lua lotem/librime-octagram boomker/librime-predict"
-RUN bash action-install-plugins-macos.sh
+RUN bash install-plugins.sh \
+  rime/librime-charcode \
+  hchunhui/librime-lua \
+  lotem/librime-octagram \
+  boomker/librime-predict
 
 RUN cmake -B build -G Ninja \
   -DCMAKE_BUILD_TYPE:STRING=Release \
