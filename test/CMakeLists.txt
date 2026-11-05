@@ -37,7 +37,7 @@ target_link_libraries(rime_test
   ${rime_library}
   ${rime_dict_library}
   ${rime_gears_library}
-  ${rime_plugins_library}
+  ${rime_levers_library}
   ${GTEST_LIBRARIES})
 
 # Merged builds link the plugin dependencies (leveldb, sqlite3, ...) into the
