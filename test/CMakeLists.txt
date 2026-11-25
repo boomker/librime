@@ -1,12 +1,13 @@
-aux_source_directory(. rime_test_src)
-set(predict_test_src ${CMAKE_CURRENT_SOURCE_DIR}/predict_test.cc)
-list(FILTER rime_test_src EXCLUDE REGEX "(^|.*/)predict_test\\.cc$")
-set(enable_predict_tests FALSE)
-if(TARGET rime-predict-objs AND NOT WIN32)
-  set(enable_predict_tests TRUE)
+file(GLOB rime_test_src CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/*.cc")
+
+set(rime_test_output_dir ${PROJECT_BINARY_DIR}/test)
+
+if(TARGET GTest::gtest)
+  set(rime_gtest_target GTest::gtest)
+else()
+  set(rime_gtest_target ${GTEST_LIBRARIES})
 endif()
 
-set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/test)
 add_executable(rime_test ${rime_test_src})
 
 if(enable_predict_tests)
@@ -34,20 +35,15 @@ if(enable_predict_tests)
 endif()
 
 target_link_libraries(rime_test
-  ${rime_library}
+  PRIVATE ${rime_library}
   ${rime_dict_library}
   ${rime_gears_library}
   ${rime_levers_library}
-  ${GTEST_LIBRARIES})
-
-# Merged builds link the plugin dependencies (leveldb, sqlite3, ...) into the
-# rime target itself, which exports them to its dependents. Linking
-# rime_plugins_deps here as well would duplicate those -l flags, so the test
-# target relies on that exported interface instead.
-
+  ${rime_gtest_target})
+rime_setup_executable(rime_test ${rime_test_output_dir})
 if(BUILD_SHARED_LIBS)
   target_compile_definitions(rime_test PRIVATE RIME_IMPORTS)
-endif(BUILD_SHARED_LIBS)
+endif()
 if(NOT Opencc_DICT_DIR)
   message(FATAL_ERROR "Could not locate the installed opencc dict directory "
                        "(e.g. t2s.json); required to build rime_test.")
@@ -56,8 +52,11 @@ target_compile_definitions(rime_test PRIVATE
   RIME_OPENCC_DICT_DIR="${Opencc_DICT_DIR}")
 
 file(GLOB test_data_files ${PROJECT_SOURCE_DIR}/data/test/*.yaml)
-file(COPY ${test_data_files} DESTINATION ${EXECUTABLE_OUTPUT_PATH})
+add_custom_target(rime_test_data ALL
+  COMMAND ${CMAKE_COMMAND} -E make_directory "${rime_test_output_dir}"
+  COMMAND ${CMAKE_COMMAND} -E copy_if_different ${test_data_files} "${rime_test_output_dir}")
+add_dependencies(rime_test rime_test_data)
 
 add_test(NAME rime_test
   COMMAND rime_test
-  WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
+  WORKING_DIRECTORY ${rime_test_output_dir})
