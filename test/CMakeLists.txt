@@ -1,5 +1,17 @@
 file(GLOB rime_test_src CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/*.cc")
 
+# predict_test.cc needs the predict plugin's msgpack headers, so keep it out of
+# the glob and only add it when the plugin objects are available. Upstream's
+# build refactor dropped this setup while leaving the `enable_predict_tests`
+# block below, which made the glob compile predict_test.cc unconditionally and
+# fail on a missing <msgpack.hpp>.
+set(predict_test_src ${CMAKE_CURRENT_SOURCE_DIR}/predict_test.cc)
+list(FILTER rime_test_src EXCLUDE REGEX "(^|.*/)predict_test\\.cc$")
+set(enable_predict_tests FALSE)
+if(TARGET rime-predict-objs AND NOT WIN32)
+  set(enable_predict_tests TRUE)
+endif()
+
 set(rime_test_output_dir ${PROJECT_BINARY_DIR}/test)
 
 if(TARGET GTest::gtest)
